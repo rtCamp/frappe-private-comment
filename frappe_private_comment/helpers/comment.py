@@ -25,37 +25,18 @@ def add_comments_in_timeline(doc, docinfo):
     docinfo.like_logs = []
     docinfo.workflow_logs = []
 
+    # Get only parent comments
     comments = frappe.get_all(
         "Comment",
         fields="*",
-        filters={"reference_doctype": doc.doctype, "reference_name": doc.name},
+        filters={
+            "reference_doctype": doc.doctype,
+            "reference_name": doc.name,
+            "custom_reply_to": "",
+        },
     )
 
-    filtered_comments = []
-
-    if frappe.session.user != "Administrator":
-        for comment in comments:
-            if comment.custom_visibility == "Visible to only you":
-                if comment.owner == frappe.session.user:
-                    filtered_comments.append(comment)
-
-            elif comment.custom_visibility == "Visible to mentioned":
-                member = frappe.db.get_all(
-                    "User Group Member",
-                    filters={
-                        "user": frappe.session.user,
-                        "parent": comment.name,
-                        "parenttype": "Comment",
-                    },
-                )
-
-                if comment.owner == frappe.session.user or (len(member) > 0):
-                    filtered_comments.append(comment)
-
-            else:
-                filtered_comments.append(comment)
-    else:
-        filtered_comments = comments
+    filtered_comments = filter_comments_by_visibility(comments, frappe.session.user)
 
     for c in filtered_comments:
         match c.comment_type:
@@ -76,3 +57,61 @@ def add_comments_in_timeline(doc, docinfo):
                 docinfo.workflow_logs.append(c)
 
     return comments
+
+
+def filter_comments_by_visibility(comments, user):
+    filtered_comments = []
+
+    if user != "Administrator":
+        for comment in comments:
+            if comment.custom_visibility == "Visible to only you":
+                if comment.owner == user:
+                    filtered_comments.append(comment)
+
+            elif comment.custom_visibility == "Visible to mentioned":
+                member = frappe.db.get_all(
+                    "User Group Member",
+                    filters={
+                        "user": user,
+                        "parent": comment.name,
+                        "parenttype": "Comment",
+                    },
+                )
+
+                if comment.owner == user or (len(member) > 0):
+                    filtered_comments.append(comment)
+
+            else:
+                filtered_comments.append(comment)
+    else:
+        filtered_comments = comments
+    return filtered_comments
+
+
+def get_thread_participants(comment_id: str) -> set:
+    """
+    Get the participants in a comment thread
+    Returns a union of:
+    - The original commenter
+    - The mentioned users
+    - The commenters in the thread
+    """
+    # Get all comments in the thread
+    original_comment = frappe.get_doc("Comment", comment_id)
+    thread_comments = frappe.get_all(
+        "Comment",
+        filters={
+            "custom_reply_to": comment_id,
+        },
+        fields=["comment_email", "custom_mentions.user"],
+    )
+
+    mention_users = set()
+    mention_users.add(original_comment.comment_email)
+    for comment in thread_comments:
+        mention_users.add(comment["comment_email"])
+        mention_users.add(comment["user"])
+    mention_users.update(mention.user for mention in original_comment.custom_mentions)
+    mention_users.discard(None)
+
+    return mention_users

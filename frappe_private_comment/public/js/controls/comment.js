@@ -27,7 +27,7 @@ frappe.ui.form.ControlComment = class extends frappe.ui.form.ControlComment {
                                         Visible to only you</option>
                                 </select>
                                 <div class="select-icon ">
-                                    <svg class="icon  icon-sm" style="">
+                                    <svg class="icon  icon-sm">
                                         <use class="" href="#icon-select"></use>
                                     </svg>
                                 </div>

@@ -1,3 +1,5 @@
+frappe.require(["/assets/frappe_private_comment/js/controls/replies.js"]);
+
 /**Enable the HTML Editor field preview mode by default using the provided function */
 const time_line_interval_loop = setInterval(() => {
   let html_time_line_item = document.querySelectorAll(".new-timeline > .timeline-items .timeline-item");
@@ -5,7 +7,7 @@ const time_line_interval_loop = setInterval(() => {
   if (html_time_line_item.length != 0) {
     update_comments_timeline();
   }
-}, 500);
+}, 300);
 
 function get_comment_visibility_icons(visibility) {
   if (visibility == "Visible to everyone") {
@@ -49,13 +51,27 @@ function add_visibility_icons(time_line_item, visibility) {
 }
 
 function update_comments_timeline() {
-  let html_time_line_items = document.querySelectorAll(".new-timeline > .timeline-items .timeline-item");
+  // Select all the timeline comments and replies
+  let html_time_line_items = document.querySelectorAll(".new-timeline > .timeline-items > .timeline-item");
 
+  // Add the visibility icons to the comments
   for (let index = 0; index < html_time_line_items.length; index++) {
+    // if the comment visibility are already added, skip
     if (html_time_line_items[index].querySelector(".visibility-info")) {
-      return;
+      break;
     }
     update_time_line(html_time_line_items[index]);
+  }
+
+  // Add the reply button to the comments
+  for (let index = 0; index < html_time_line_items.length; index++) {
+    // if the reply button is already added, skip
+    if (html_time_line_items[index].querySelector(".reply-btn")) {
+      break;
+    }
+    if (html_time_line_items[index].dataset.doctype == "Comment") {
+      add_reply_button(html_time_line_items[index]);
+    }
   }
 }
 
@@ -85,11 +101,16 @@ function update_time_line(time_line_item) {
     },
     callback: (res) => {
       add_visibility_icons(time_line_item, res?.message?.custom_visibility);
+      // refresh the timeline thread
+      this.cur_frm.footer.setup_replies();
     },
   });
 
   let button = time_line_item.querySelector(".custom-actions button");
 
+  if (!button) {
+    return;
+  }
   button.dataset.name = time_line_item.dataset.name;
 
   // Remove the event listener
@@ -129,6 +150,10 @@ function handle_save(time_line_item, button) {
 }
 
 function handle_edit(time_line_item, button) {
+  const replyContainer = time_line_item.querySelector(".reply-container");
+  if (replyContainer) {
+    replyContainer.remove();
+  }
   time_line_item.querySelector(".timeline-message-box").append(get_input_html(time_line_item));
   time_line_item.querySelector("#visibility").value =
     time_line_item.querySelector(".visibility-info").dataset.visibility;
@@ -151,7 +176,7 @@ function get_input_html(time_line_item) {
                         Visible to only you</option>
                 </select>
                 <div class="select-icon ">
-                    <svg class="icon  icon-sm" style="">
+                    <svg class="icon  icon-sm">
                         <use class="" href="#icon-select"></use>
                     </svg>
                 </div>
