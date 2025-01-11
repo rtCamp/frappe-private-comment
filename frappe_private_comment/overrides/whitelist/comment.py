@@ -120,21 +120,6 @@ def get_comment_visibility(name: str):
 
 
 @frappe.whitelist()
-def get_comment_replies(reference_doctype: str, comment_id: str):
-    """Get comment replies"""
-    replies = frappe.get_all(
-        "Comment",
-        filters={
-            "reference_doctype": reference_doctype,
-            "custom_reply_to": comment_id,
-        },
-        fields="*",
-        order_by="creation DESC",
-    )
-    return filter_comments_by_visibility(replies, frappe.session.user)
-
-
-@frappe.whitelist()
 def get_all_replies(reference_doctype: str, reference_name: str):
     """Get all replies for a comment in a structured format"""
     replies = frappe.get_all(
