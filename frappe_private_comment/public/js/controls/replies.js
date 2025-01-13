@@ -29,7 +29,7 @@ function render_replies(commentSelector, commentId, allReplies, decrease_margin 
 
   replies.forEach((reply) => {
     const $replyContent = $(`
-            <div style="position: relative;">
+            <div class="reply-wrapper">
                 <div class="timeline-badge">
                     <svg class="icon icon-md">
                         <use href="#icon-small-message"></use>
@@ -80,19 +80,14 @@ function render_replies(commentSelector, commentId, allReplies, decrease_margin 
 
     const actionButtons = $("<div>").addClass("comment-actions");
 
-    const moreButton = $("<div>")
-      .addClass("dropdown")
-      .append(
-        $("<button>")
-          .addClass("btn btn-xs btn-link dropdown-toggle")
-          .attr({
-            "data-toggle": "dropdown",
-            "aria-haspopup": "true",
-            "aria-expanded": "false",
-          })
-          .html('<svg class="icon icon-sm"><use href="#icon-dot-horizontal"></use></svg>')
-      );
-
+    const moreButton = $("<a>")
+      .addClass("action-btn")
+      .attr({
+        "data-toggle": "dropdown",
+        "aria-haspopup": "true",
+        "aria-expanded": "false",
+      })
+      .html('<svg class="icon icon-sm"><use href="#icon-dot-horizontal"></use></svg>');
     const dropdownMenu = $("<div>")
       .addClass("dropdown-menu small dropdown-menu-right")
       .append(

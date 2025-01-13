@@ -12,8 +12,7 @@
   left: -30px;
   top: 0;
   bottom: 0;
-  width: 1px;
-  background-color: #e0e5e8;
+  border-right: 1px solid #e0e5e8;
 }
 
 .timeline-badge {
@@ -29,12 +28,23 @@
   margin-top: 20px;
   position: relative;
   max-width: 700px;
-  padding-bottom: 2px;
-  margin-left: 2px;
+  padding-block: 0 !important;
+  padding-left: 0 !important;
+  margin-left: 0px !important;
+  border: 1px solid #ededed;
 
   .timeline-content {
     padding-bottom: 2px;
-    margin-left: 6px;
+    margin-left: 0px !important;
+  }
+
+  .timeline-message-box {
+    margin-bottom: 14px !important;
+    margin: 3.5px !important;
+  }
+
+  .timeline-user {
+    margin-left: 5px !important;
   }
 
   .avatar {
@@ -43,7 +53,7 @@
 
   hr {
     margin-top: 4px;
-    margin-left: 32px;
+    margin-left: 38px;
   }
 
   .ql-editor.read-mode {
@@ -75,4 +85,42 @@
 
 .dropdown {
   display: inline-block;
+}
+
+.reply-wrapper {
+  position: relative;
+}
+
+/* Smaller devicec */
+
+@media only screen and (max-width: 600px) {
+  .timeline-items {
+    overflow: hidden;
+  }
+
+  .new-timeline>.timeline-items>.threaded-reply-container {
+    overflow-x: scroll;
+    display: flex;
+    width: 85%;
+    margin-left: 30px;
+  }
+
+  .new-timeline>.timeline-items>.threaded-reply-container>.vertical-line {
+    width: 20%;
+    flex-shrink: 0;
+  }
+
+  .threaded-reply-container {
+    position: relative;
+    display: flex;
+  }
+
+  .vertical-line {
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .reply-wrapper {
+    min-width: 600px;
+  }
 }
