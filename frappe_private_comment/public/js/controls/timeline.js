@@ -63,6 +63,7 @@ function update_comments_timeline() {
     update_time_line(html_time_line_items[index]);
   }
 
+  let replies_loaded = true;
   // Add the reply button to the comments
   for (let index = 0; index < html_time_line_items.length; index++) {
     // if the reply button is already added, skip
@@ -71,7 +72,12 @@ function update_comments_timeline() {
     }
     if (html_time_line_items[index].dataset.doctype == "Comment") {
       add_reply_button(html_time_line_items[index]);
+      replies_loaded = false;
     }
+  }
+
+  if (!replies_loaded) {
+    this.cur_frm.footer.setup_replies();
   }
 }
 
@@ -101,8 +107,6 @@ function update_time_line(time_line_item) {
     },
     callback: (res) => {
       add_visibility_icons(time_line_item, res?.message?.custom_visibility);
-      // refresh the timeline thread
-      this.cur_frm.footer.setup_replies();
     },
   });
 

@@ -73,11 +73,6 @@ frappe.ui.form.Footer = class extends frappe.ui.form.Footer {
     });
   }
 
-  refresh() {
-    super.refresh();
-    this.setup_replies();
-  }
-
   setup_replies() {
     const docname = this.frm.docname;
     const doctype = this.frm.doctype;
@@ -100,9 +95,7 @@ frappe.ui.form.Footer = class extends frappe.ui.form.Footer {
         $timelineItems.find('.timeline-item[data-doctype="Comment"]').each(function () {
           const $item = $(this);
           const commentId = $item.data("name");
-          const replies = res.message[commentId];
-          if (!replies || replies.length === 0) return;
-          render_replies($item, replies);
+          render_replies($item, commentId, res.message);
         });
       },
     });

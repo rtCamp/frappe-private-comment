@@ -1,3 +1,5 @@
+const REPLY_LEVEL_LIMIT = 7;
+
 function add_reply_button(time_line_item) {
   if ($(time_line_item).find(".custom-actions .reply-btn").length) {
     return;
@@ -10,7 +12,12 @@ function add_reply_button(time_line_item) {
   $(time_line_item).find(".custom-actions").append(replyButton);
 }
 
-function render_replies(commentSelector, replies) {
+function render_replies(commentSelector, commentId, allReplies, decrease_margin = false, comment_level = 1) {
+  const replies = allReplies[commentId];
+  if (!replies || Object.keys(replies).length === 0) {
+    return;
+  }
+
   const $comment = $(commentSelector);
   const $prevContainer = $comment.next(".threaded-reply-container");
   $prevContainer && $prevContainer.remove();
@@ -28,9 +35,9 @@ function render_replies(commentSelector, replies) {
                         <use href="#icon-small-message"></use>
                     </svg>
                 </div>
-                <div class="timeline-item frappe-card" data-doctype="Comment" id="comment-${reply.name}" data-name="${
+                <div class="timeline-item frappe-card" data-doctype="Reply" data-level="${comment_level}" id="comment-${
       reply.name
-    }">
+    }" data-name="${reply.name}">
                     <div class="timeline-content">
                         <div class="timeline-message-box">
                             <div>
@@ -54,11 +61,20 @@ function render_replies(commentSelector, replies) {
                                 <p>${reply.content}</p>
                             </div>
                             <div class="edit-mode"></div>
-                        </div>
+                       </div>
                     </div>
                 </div>
             </div>
         `);
+
+    if (decrease_margin) {
+      $replyContainer.css("margin-left", "55px");
+    }
+
+    const $replyButton = $("<button>")
+      .addClass("btn btn-xs btn-link reply-btn")
+      .html('<i class="fa fa-reply"></i> Reply')
+      .on("click", () => handle_reply("#comment-" + reply.name));
 
     $replyContainer.append($replyContent);
 
@@ -108,45 +124,58 @@ function render_replies(commentSelector, replies) {
     if (reply.comment_email === frappe.session.user) {
       actionButtons.append(editButton);
     }
+    if (comment_level < REPLY_LEVEL_LIMIT) {
+      actionButtons.append($replyButton);
+    }
     actionButtons.append(moreButton);
     $replyContent.find(".text-muted").append(actionButtons);
   });
 
   $comment.after($replyContainer);
+
+  replies.forEach((reply) => {
+    render_replies("#comment-" + reply.name, reply.name, allReplies, true, comment_level + 1);
+  });
 }
 
-function addThreadedReply(commentSelector, doctype) {
+function addThreadedReply(commentSelector, doctype, docname) {
   const $comment = $(commentSelector);
   const commentId = $comment.data("name");
+  const commentLevel = $comment.data("level") ?? 1;
+  const isReply = $comment.data("doctype") === "Reply";
 
   frappe.call({
-    method: "frappe_private_comment.overrides.whitelist.comment.get_comment_replies",
+    method: "frappe_private_comment.overrides.whitelist.comment.get_all_replies",
     args: {
+      reference_name: docname,
       reference_doctype: doctype,
-      comment_id: commentId,
     },
     callback: (res) => {
       if (res.exc) {
         console.error(res.exc);
         return;
       }
-
-      if (!res.message || !res.message.length) {
+      if (!res.message || !res.message[commentId].length) {
         // No replies found
         return;
       }
 
-      render_replies(commentSelector, res.message);
+      render_replies(commentSelector, commentId, res.message, isReply, commentLevel + 1);
     },
   });
 }
 
 function handle_reply(time_line_item) {
   // if on Edit Mode, click on `Dismiss` button
-  const dismissButton = $(time_line_item).find(".custom-actions.save-open > button:nth-child(2)");
-  if (dismissButton.length) {
-    dismissButton.click();
+  const parentDismiss = $(time_line_item).find(".custom-actions.save-open > button:nth-child(2)");
+  if (parentDismiss.length) {
+    parentDismiss.click();
   }
+  const replyDismiss = $(time_line_item).find(".btn.cancel-edit");
+  if (replyDismiss.length) {
+    replyDismiss.click();
+  }
+
   const $timeLineItem = $(time_line_item);
   const replyingToName = $timeLineItem.find(".avatar.avatar-medium").attr("title");
   if ($timeLineItem.find(".reply-container").length) {
@@ -250,7 +279,7 @@ function submit_reply(time_line_item, content, visibility) {
         $(time_line_item).find(".reply-container").remove();
         frappe.utils.play_sound("click");
         update_comments_timeline();
-        addThreadedReply(time_line_item, this.cur_frm.doctype);
+        addThreadedReply(time_line_item, this.cur_frm.doctype, this.cur_frm.docname);
       }
     },
   });
@@ -280,8 +309,6 @@ function handle_reply_delete(commentSelector) {
         if (r.exc) {
           frappe.msgprint(__("There was an error deleting the comment"));
         } else {
-          $comment.closest(".timeline-item").remove();
-          this.cur_frm?.footer.refresh();
           frappe.show_alert({
             message: __("Comment deleted"),
             indicator: "green",
@@ -293,11 +320,16 @@ function handle_reply_delete(commentSelector) {
 }
 
 function handle_reply_edit(parentComment, commentSelector) {
+  const replyContainer = $(commentSelector).find(".reply-container");
+  if (replyContainer) {
+    replyContainer.remove();
+  }
   const $comment = $(commentSelector);
   const $readMode = $comment.find(".read-mode");
   const $editMode = $comment.find(".edit-mode");
   const commentId = $comment.data("name");
   const doctype = this.cur_frm.doctype;
+  const docname = this.cur_frm.docname;
 
   $readMode.hide();
   $editMode.show().empty();
@@ -380,7 +412,7 @@ function handle_reply_edit(parentComment, commentSelector) {
           $editMode.hide();
           $readMode.show();
 
-          addThreadedReply(parentComment, doctype);
+          addThreadedReply(parentComment, doctype, docname);
           frappe.show_alert({
             message: __("Comment updated"),
             indicator: "green",
