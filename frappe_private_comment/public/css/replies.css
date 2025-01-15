@@ -12,8 +12,7 @@
   left: -30px;
   top: 0;
   bottom: 0;
-  width: 1px;
-  background-color: #e0e5e8;
+  border-right: 1px solid #e0e5e8;
 }
 
 .timeline-badge {
@@ -26,8 +25,42 @@
 }
 
 .timeline-item.frappe-card {
+  margin-top: 20px;
   position: relative;
-  max-width: 700px
+  max-width: 700px;
+  padding-block: 0 !important;
+  padding-left: 0 !important;
+  margin-left: 0px !important;
+  border: 1px solid #ededed;
+  margin-bottom: 0px !important;
+
+  .timeline-content {
+    padding-bottom: 0px !important;
+    margin-left: 0px !important;
+  }
+
+  .timeline-message-box {
+    margin-bottom: 14px !important;
+    margin: 3.5px !important;
+    margin-bottom: 0px !important;
+  }
+
+  .timeline-user {
+    margin-left: 5px !important;
+  }
+
+  .avatar {
+    margin-right: 3px;
+  }
+
+  hr {
+    margin-top: 4px;
+    margin-left: 38px;
+  }
+
+  .ql-editor.read-mode {
+    padding-left: 40px;
+  }
 }
 
 .edit-mode {
@@ -54,4 +87,50 @@
 
 .dropdown {
   display: inline-block;
+}
+
+.reply-wrapper {
+  position: relative;
+}
+
+/* Smaller devicec */
+
+@media only screen and (max-width: 600px) {
+  .timeline-items {
+    overflow: hidden;
+  }
+
+  .new-timeline>.timeline-items>.threaded-reply-container {
+    overflow-x: scroll;
+    display: flex;
+    margin-left: 0 !important;
+    padding-left: 90px;
+  }
+
+  .new-timeline>.timeline-items>.threaded-reply-container>.vertical-line {
+    flex-shrink: 0;
+    left: 60px !important;
+  }
+
+  .threaded-reply-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vertical-line {
+    position: relative;
+    flex-shrink: 0;
+    position: absolute;
+    top: 10px;
+    background-color: #F3F3F3;
+    border-radius: 999px;
+    width: 1px !important;
+    padding: 0px !important;
+  }
+
+
+  .reply-wrapper {
+    min-width: 600px;
+  }
 }
